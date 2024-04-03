@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    build: . # This path should contain your Dockerfile for the Express app.
+    ports:
+      - "8888:8888" # Expose the Express app on port 8080.
+    environment:
+      - PORT=8888 # Set the port for the Express app.
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge

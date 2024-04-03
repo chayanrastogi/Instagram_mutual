@@ -1,0 +1,112 @@
+import asyncio
+from typing import Any
+import aiohttp
+import random
+import time
+import traceback
+from app.core.config import settings
+
+api_keys = [settings.LAMADAVA_KEY]
+
+async def get_data_async(s,user_pk, item):
+    try:
+
+        re_try=True
+        count=5
+
+        
+        url=f'https://api.hikerapi.com/v1/user/search/followers?user_id={user_pk}&query={item["username"]}'
+        headers = {
+            'Accept': 'application/json',
+            'x-access-key': random.choice(api_keys)
+        }
+        while(re_try and count>0):
+
+            try:
+
+                async with s.get(url,headers=headers) as r:
+                    data = await r.json()
+                    
+                    if len(data)==0:
+                        return None
+                    
+                    
+                    temp = None
+                    re_try=True
+                    count=3
+                    while(re_try and count>0):
+                        try:
+                            for item_ in data:
+                                if item['pk_id'] == item_['pk']:
+                                    url = f"https://api.hikerapi.com/v1/user/by/username?username={item['username']}"
+                                    headers = {
+                                        'Accept': 'application/json',
+                                        'x-access-key': random.choice(api_keys)
+                                    }
+                                    async with s.get(url,headers=headers) as r:
+                                        temp = await r.json()
+                                        re_try=False
+                                        return temp
+
+
+                                    # temp = cl.user_by_username_v2(item['username'])
+                                    # re_try=False
+                                    # return temp['user']
+                            re_try=False
+                        except Exception as e:
+                            url = f"https://api.hikerapi.com/v1/user/by/username?username={item['username']}"
+                            headers = {
+                                        'Accept': 'application/json',
+                                        'x-access-key': random.choice(api_keys)
+                                    }
+
+                            print("2-->",e,"Response-->",temp)
+                            count-=1
+                            if count==0:
+                                re_try=False
+                                return 
+
+                    return 
+            except Exception as e:
+                print("3-->",e)
+                count-=1
+                url=f'https://api.hikerapi.com/v1/user/search/followers?user_id={user_pk}&query={item["username"]}'
+                headers = {
+                    'Accept': 'application/json',
+                    'x-access-key': random.choice(api_keys)
+                }
+                time.sleep(10)
+                if count==0:
+                    re_try=False
+                    return
+
+
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return None
+
+
+
+async def fetch_all(s, user_pk, user_following):
+    tasks = []
+    for item in user_following:
+        task = asyncio.create_task(get_data_async(s, user_pk, item))
+        tasks.append(task)
+    res = await asyncio.gather(*tasks)
+    return res
+
+async def get_mutual(user_pk,user_following)->list[Any]:
+    async with aiohttp.ClientSession() as session:
+        try:
+            result = await fetch_all(session, user_pk, user_following)
+
+            result = [x for x in result if x is not None]
+            print("the length of mutual result is ", len(result))
+            return result
+        except Exception as e:
+            traceback.print_exc()
+            print("Inside Main Block",e)
+            return []
+
+
