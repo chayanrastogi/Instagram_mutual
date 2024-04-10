@@ -1,8 +1,8 @@
 const express = require('express');
 const axios = require('axios');
 const dotenv = require('dotenv');
-const db = require('./db')
-const InstagramMutuals = require('./model/instagramMutualsModel')
+const db = require('../db')
+const InstagramMutuals = require('../model/instagramMutualsModel')
 
 dotenv.config();
 
