@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8888
 
 # Specify the command to run your application
-CMD ["node", "instagramUser.js"]
+CMD ["node", "instagramMutualsList.js"]
