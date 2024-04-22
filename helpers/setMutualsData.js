@@ -5,36 +5,6 @@ const axios = require('axios');
 
 const apiKey = 'ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH';
 
-async function searchFollowerById(user_id, pk, mutuals, following) {
-    for (var user of following) {
-        if (user.is_private === true) {
-            continue;
-        } else {
-            try {
-                let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
-                let headers = {
-                    'Accept': 'application/json',
-                    'x-access-key': apiKey
-                };
-
-                const response = await axios.get(url, { headers });
-                const data = response.data;
-                if (data) {
-                    mutuals.push(user);
-                }
-            } catch (error) {
-                console.log(error)
-            }
-        }
-    }
-
-    await InstagramData.upsert({
-        id: user_id,
-        mutuals: mutuals,
-        processed: true,
-    });
-}
-
 async function getMutual(user_id, pk) {
     try {
         let mutuals = [];
@@ -65,12 +35,33 @@ async function getMutual(user_id, pk) {
             }
         }
         
-        const midpoint  = Math.ceil(following.length / 2);
-        const firstHalf = following.slice(0, midpoint);
-        const secondHalf = following.slice(midpoint);
-        
-        searchFollowerById(user_id, pk, mutuals, firstHalf);
-        searchFollowerById(user_id, pk, mutuals, secondHalf);
+        for (var user of following) {
+            if (user.is_private === true) {
+                continue;
+            } else {
+                try {
+                    let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
+                    let headers = {
+                        'Accept': 'application/json',
+                        'x-access-key': apiKey
+                    };
+    
+                    const response = await axios.get(url, { headers });
+                    const data = response.data;
+                    if (data) {
+                        mutuals.push(user);
+                    }
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+        }
+    
+        await InstagramData.upsert({
+            id: user_id,
+            mutuals: mutuals,
+            processed: true,
+        });
 
     } catch (error) {
         console.log(error)
