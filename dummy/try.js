@@ -1,8 +1,8 @@
 const express = require('express');
 const axios = require('axios');
 const dotenv = require('dotenv');
-const db = require('./db')
-const InstagramData = require('./model/instagramUserData')
+const db = require('../db')
+const InstagramData = require('../model/instagramUserData')
 const { v4: uuidv4 } = require('uuid');
 
 dotenv.config();
