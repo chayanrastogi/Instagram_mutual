@@ -126,6 +126,15 @@ const setMutualsData = async (req, res) => {
             }
         }
 
+        const foundUser = await InstagramData.findOne({ where: { id: user_id } });
+        if (foundUser) {
+            return res.status(400).json({
+                status: "success",
+                message: "Mutuals have been retrieved",
+                userId: pk,
+            });
+        }
+
         if (!isPrivate) {
             await db.query("INSERT INTO instagram_user_data (id, processed, created_at) VALUES (:user_id, false, NOW())", {
                 replacements: { user_id }
