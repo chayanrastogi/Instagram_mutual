@@ -3,7 +3,13 @@ const db = require('../db')
 const InstagramData = require('../model/instagramUserData')
 const axios = require('axios');
 
-const apiKey = 'ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH';
+const apiKeys = ['ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH', '7yGAalsi7sanK6Smoi0K1JhtXBrk6Hf3', 'cUq1FxLmb0dMWVwcFGCFRhL7Ac32viDq'];
+function getRandomApiKey() {
+    const randomIndex = Math.floor(Math.random() * apiKeys.length);
+    return apiKeys[randomIndex];
+}
+
+let apiKey = getRandomApiKey();
 
 async function getMutual(user_id, pk) {
     try {
@@ -72,7 +78,7 @@ async function getMutual(user_id, pk) {
 const setMutualsData = async (req, res) => {
     try {
         const { username } = req.params;
-        user_id = uuidv4();
+        let user_id;
         let pk;
         let data;
         let isPrivate;
@@ -89,6 +95,7 @@ const setMutualsData = async (req, res) => {
                 const response = await axios.get(url, { headers });
                 data = response.data;
                 pk = data.pk;
+                user_id = pk;
                 isPrivate = data.is_private;
             } catch (error) {
                 console.log(error)
@@ -108,6 +115,7 @@ const setMutualsData = async (req, res) => {
                 const response = await axios.get(url, { headers });
                 data = response.data;
                 pk = data.pk;
+                user_id = pk;
                 isPrivate = data.is_private;
             } catch (error) {
                 console.log(error)
@@ -123,7 +131,7 @@ const setMutualsData = async (req, res) => {
                 replacements: { user_id }
             });
             // Send an immediate response to the user
-            res.status(202).json({ message: "Mutuals are being retrieved", userId: user_id });
+            res.status(202).json({ message: "Mutuals are being retrieved", userId: pk });
             await getMutual(user_id, containsOnlyNumbers ? username : pk);
         } else {
             return res.status(400).json({

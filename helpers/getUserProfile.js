@@ -1,7 +1,13 @@
 const axios = require('axios');
 
 
-const apiKey = 'ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH';
+const apiKeys = ['ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH', '7yGAalsi7sanK6Smoi0K1JhtXBrk6Hf3', 'cUq1FxLmb0dMWVwcFGCFRhL7Ac32viDq'];
+function getRandomApiKey() {
+    const randomIndex = Math.floor(Math.random() * apiKeys.length);
+    return apiKeys[randomIndex];
+}
+let apiKey = getRandomApiKey();
+
 
 async function getUserProfileData(id) {
     try {
@@ -10,7 +16,7 @@ async function getUserProfileData(id) {
             'Accept': 'application/json',
             'x-access-key': apiKey
         };
-
+        
         const response = await axios.get(url, { headers });
         temp = response.data;
         return {

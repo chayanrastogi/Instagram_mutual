@@ -67,7 +67,6 @@ app.post('/api/v1/user/register', async (req, res) => {
     }
 });
 
-
 // SET User Mutuals Data
 app.post('/api/v1/mutual/:username', setMutualsData);
 
