@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-//REGISTER New User
+//REGISTER/LOGIN User
 app.post('/api/v1/user/register', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
