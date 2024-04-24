@@ -13,8 +13,8 @@ app.use(express.json());
 
 //REGISTER New User
 app.post('/api/v1/user/register', async (req, res) => {
-    const { name, email, password } = req.body;
-    if (!email || !name || !password) {
+    const { email, password } = req.body;
+    if (!email || !password) {
         res.status(400).json({
             message: "All credentials are required"
         });
@@ -26,10 +26,21 @@ app.post('/api/v1/user/register', async (req, res) => {
                 email: email
             }
         });
+
         if(existingUser){
-            return res.status(400).json({
-                message: "User already exists"
-            });
+
+            if(await bcrypt.compare(password, existingUser?.password)){
+                return res.status(200).json({
+                    message: "User logged in successfully",
+                    user: existingUser
+                });
+
+            }else{
+                return res.status(400).json({
+                    message: "Invalid credentials"
+                });
+            }
+
         }
 
         //hashed
@@ -37,13 +48,12 @@ app.post('/api/v1/user/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const newUser = await User.create({
-            name,
             email,
             password: hashedPassword,
         });
 
         return res.status(201).json({
-            message: "User registered successfully",
+            message: "User created successfully",
             user: newUser
         });
 
@@ -57,46 +67,6 @@ app.post('/api/v1/user/register', async (req, res) => {
     }
 });
 
-//LOGIN user
-app.post('/api/v1/user/login', async(req, res)=>{
-    const {email, password} = req.body;
-    if(!email || !password){
-        return res.status(400).json({
-            message: "All credentials are required"
-        });
-    }
-    try {
-        const foundUser = await User.findOne({
-            where: {
-                email: email
-            }
-        });
-
-        if(!foundUser){
-            return res.status(400).json({
-                message: "User not found"
-            });
-        }
-
-        if(await bcrypt.compare(password, foundUser?.password)){
-            return res.status(200).json({
-                message: "User logged in successfully",
-                user: foundUser
-            });
-        }else{
-            return res.status(400).json({
-                message: "Invalid credentials"
-            });
-        }
-
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({
-            message: "Error in login user",
-            error: error,
-        });
-    }
-})
 
 // SET User Mutuals Data
 app.post('/api/v1/mutual/:username', setMutualsData);
