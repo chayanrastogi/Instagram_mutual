@@ -248,7 +248,7 @@ async function getMutual(user_id, pk) {
         });
     } catch (error) {
         console.log(error);
-        // getMutual(user_id, pk);
+        getMutual(user_id, pk);
     }
 }
 
