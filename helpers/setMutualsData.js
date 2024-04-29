@@ -248,7 +248,11 @@ async function getMutual(user_id, pk) {
         });
     } catch (error) {
         console.log(error);
-        getMutual(user_id, pk);
+        let retry = 3;
+        while (retry > 0) {
+            getMutual(user_id, pk);
+            --retry;
+        }
     }
 }
 
