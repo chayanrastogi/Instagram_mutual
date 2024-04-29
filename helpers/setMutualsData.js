@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const db = require('../db')
-const InstagramData = require('../model/instagramUserData')
+const db = require('../db');
+const InstagramData = require('../model/instagramUserData');
 const axios = require('axios');
 
 const apiKeys = ['ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH', '7yGAalsi7sanK6Smoi0K1JhtXBrk6Hf3', 'cUq1FxLmb0dMWVwcFGCFRhL7Ac32viDq'];
@@ -10,6 +10,107 @@ function getRandomApiKey() {
 }
 
 let apiKey = getRandomApiKey();
+
+// async function getMutual(user_id, pk) {
+//     try {
+//         let mutuals = [];
+//         let following = [];
+//         let url = `https://api.hikerapi.com/v1/user/following/chunk?user_id=${pk}`;
+//         let headers = {
+//             'Accept': 'application/json',
+//             'x-access-key': apiKey
+//         };
+
+//         const response = await axios.get(url, { headers });
+//         const data = response.data;
+//         following.push(...data[0]);
+//         let max_id = data[1];
+//         while (max_id) {
+//             try {
+//                 let url = `https://api.hikerapi.com/v1/user/following/chunk?user_id=${pk}&max_id=${max_id}`;
+//                 let headers = {
+//                     'Accept': 'application/json',
+//                     'x-access-key': apiKey
+//                 };
+
+//                 const response = await axios.get(url, { headers });
+//                 const data = response.data;
+//                 following.push(...data[0]);
+//                 max_id = data[1]
+//             } catch (error) {
+//                 console.log(error)
+//                 let retry = 3;
+//                 while (retry > 0) {
+//                     let url = `https://api.hikerapi.com/v1/user/following/chunk?user_id=${pk}&max_id=${max_id}`;
+//                     let headers = {
+//                         'Accept': 'application/json',
+//                         'x-access-key': apiKey
+//                     };
+
+//                     const response = await axios.get(url, { headers });
+//                     const data = response.data;
+//                     following.push(...data[0]);
+//                     max_id = data[1]
+//                     --retry;
+//                     if (!max_id) {
+//                         retry = 0;
+//                     }
+//                 }
+//             }
+//         }
+
+//         for (var user of following) {
+//             if (user.is_private === true) {
+//                 continue;
+//             } else {
+//                 try {
+//                     let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
+//                     let headers = {
+//                         'Accept': 'application/json',
+//                         'x-access-key': apiKey
+//                     };
+
+//                     const response = await axios.get(url, { headers });
+//                     const data = response.data;
+//                     if (data) {
+//                         mutuals.push(user);
+//                     }
+//                 } catch (error) {
+//                     console.log(error)
+//                     let retry = 3;
+//                     while (retry > 0) {
+//                         let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
+//                         let headers = {
+//                             'Accept': 'application/json',
+//                             'x-access-key': apiKey
+//                         };
+
+//                         const response = await axios.get(url, { headers });
+//                         const data = response.data;
+//                         if (data) {
+//                             mutuals.push(user);
+//                         }
+//                         --retry;
+//                         if (!data) {
+//                             retry = 0;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+
+//         await InstagramData.upsert({
+//             id: user_id,
+//             mutuals: mutuals,
+//             processed: true,
+//         });
+
+//     } catch (error) {
+//         console.log(error);
+//         getMutual(user_id, pk);
+//     }
+// }
+
 
 async function getMutual(user_id, pk) {
     try {
@@ -25,54 +126,132 @@ async function getMutual(user_id, pk) {
         const data = response.data;
         following.push(...data[0]);
         let max_id = data[1];
-        if (max_id) {
+
+        while (max_id) {
             try {
                 let url = `https://api.hikerapi.com/v1/user/following/chunk?user_id=${pk}&max_id=${max_id}`;
-                let headers = {
-                    'Accept': 'application/json',
-                    'x-access-key': apiKey
-                };
-
                 const response = await axios.get(url, { headers });
                 const data = response.data;
                 following.push(...data[0]);
+                max_id = data[1];
             } catch (error) {
-                console.log(error)
-            }
-        }
-        
-        for (var user of following) {
-            if (user.is_private === true) {
-                continue;
-            } else {
-                try {
-                    let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
+                console.log(error);
+                let errorData = error.response.data.exec_type;
+                let retry = 3;
+                while (retry > 0 && errorData === 'InsufficientFunds') {
+                    let url = `https://api.hikerapi.com/v1/user/following/chunk?user_id=${pk}&max_id=${max_id}`;
                     let headers = {
                         'Accept': 'application/json',
                         'x-access-key': apiKey
                     };
-    
+
                     const response = await axios.get(url, { headers });
                     const data = response.data;
-                    if (data) {
-                        mutuals.push(user);
+                    following.push(...data[0]);
+                    max_id = data[1]
+                    --retry;
+                    if (!max_id) {
+                        retry = 0;
                     }
-                } catch (error) {
-                    console.log(error)
                 }
             }
         }
-    
+
+        // If following array has at least 10 elements, split into chunks
+        if (following.length >= 10) {
+            const chunkSize = 10;
+            const followingChunks = [];
+            for (let i = 0; i < following.length; i += chunkSize) {
+                followingChunks.push(following.slice(i, i + chunkSize));
+            }
+
+            // Process each chunk in parallel
+            await Promise.all(followingChunks.map(async (chunk) => {
+                for (const user of chunk) {
+                    if (user.is_private === true) {
+                        continue;
+                    } else {
+                        try {
+                            let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
+                            const response = await axios.get(url, { headers });
+                            const data = response.data;
+                            if (data) {
+                                mutuals.push(user);
+                            }
+                        } catch (error) {
+                            console.log(error);
+                            let retry = 3;
+                            while (retry > 0) {
+                                let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
+                                let headers = {
+                                    'Accept': 'application/json',
+                                    'x-access-key': apiKey
+                                };
+
+                                const response = await axios.get(url, { headers });
+                                const data = response.data;
+                                if (data) {
+                                    mutuals.push(user);
+                                }
+                                --retry;
+                                if (!data) {
+                                    retry = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }));
+        } else {
+            // Process all users directly if following array length < 10
+            for (const user of following) {
+                if (user.is_private === true) {
+                    continue;
+                } else {
+                    try {
+                        let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
+                        const response = await axios.get(url, { headers });
+                        const data = response.data;
+                        if (data) {
+                            mutuals.push(user);
+                        }
+                    } catch (error) {
+                        console.log(error);
+                        let retry = 3;
+                        while (retry > 0) {
+                            let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
+                            let headers = {
+                                'Accept': 'application/json',
+                                'x-access-key': apiKey
+                            };
+
+                            const response = await axios.get(url, { headers });
+                            const data = response.data;
+                            if (data) {
+                                mutuals.push(user);
+                            }
+                            --retry;
+                            if (!data) {
+                                retry = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Upsert mutuals data to database
         await InstagramData.upsert({
             id: user_id,
             mutuals: mutuals,
             processed: true,
         });
-
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        // getMutual(user_id, pk);
     }
 }
+
 
 
 const setMutualsData = async (req, res) => {
