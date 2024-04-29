@@ -136,13 +136,13 @@ async function getMutual(user_id, pk) {
                 max_id = data[1];
             } catch (error) {
                 console.log(error);
-                let errorData = error.response.data.exec_type;
-                let retry = 3;
-                while (retry > 0 && errorData === 'InsufficientFunds') {
+                // let errorData = error.response.data.exec_type;
+                let retry = 2;
+                while (retry >= 0) {
                     let url = `https://api.hikerapi.com/v1/user/following/chunk?user_id=${pk}&max_id=${max_id}`;
                     let headers = {
                         'Accept': 'application/json',
-                        'x-access-key': apiKey
+                        'x-access-key': apiKeys[retry]
                     };
 
                     const response = await axios.get(url, { headers });
@@ -180,12 +180,12 @@ async function getMutual(user_id, pk) {
                             }
                         } catch (error) {
                             console.log(error);
-                            let retry = 3;
-                            while (retry > 0) {
+                            let retry = 2;
+                            while (retry >= 0) {
                                 let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
                                 let headers = {
                                     'Accept': 'application/json',
-                                    'x-access-key': apiKey
+                                    'x-access-key': apiKeys[retry]
                                 };
 
                                 const response = await axios.get(url, { headers });
@@ -217,12 +217,12 @@ async function getMutual(user_id, pk) {
                         }
                     } catch (error) {
                         console.log(error);
-                        let retry = 3;
-                        while (retry > 0) {
+                        let retry = 2;
+                        while (retry >= 0) {
                             let url = `https://api.hikerapi.com/v1/user/search/followers?user_id=${pk}&query={pk_id:${user.pk}}`;
                             let headers = {
                                 'Accept': 'application/json',
-                                'x-access-key': apiKey
+                                'x-access-key': apiKeys[retry]
                             };
 
                             const response = await axios.get(url, { headers });
@@ -282,10 +282,27 @@ const setMutualsData = async (req, res) => {
                 isPrivate = data.is_private;
             } catch (error) {
                 console.log(error)
-                return res.status(400).json({
-                    status: "failed",
-                    message: "Error in fetching details or the account does not exist"
-                })
+                let retry = 2;
+                while (retry >= 0) {
+                    let url = `https://api.hikerapi.com/v1/user/by/username?username=${username}`
+                    let headers = {
+                        'Accept': 'application/json',
+                        'x-access-key': apiKeys[retry]
+                    };
+
+                    const response = await axios.get(url, { headers });
+                    data = response.data;
+                    pk = data.pk;
+                    user_id = pk;
+                    isPrivate = data.is_private;
+                }
+                if (retry === 0) {
+                    return res.status(400).json({
+                        status: "failed",
+                        message: "Error in fetching details or the account does not exist"
+                    })
+                }
+                retry--;
             }
         } else {
             try {
@@ -302,10 +319,27 @@ const setMutualsData = async (req, res) => {
                 isPrivate = data.is_private;
             } catch (error) {
                 console.log(error)
-                return res.status(400).json({
-                    status: "failed",
-                    message: "Error in fetching details or the account does not exist"
-                })
+                let retry = 2;
+                while (retry >= 0) {
+                    let url = `https://api.hikerapi.com/v1/user/by/id?id=${username}`
+                    let headers = {
+                        'Accept': 'application/json',
+                        'x-access-key': apiKeys[retry]
+                    };
+
+                    const response = await axios.get(url, { headers });
+                    data = response.data;
+                    pk = data.pk;
+                    user_id = pk;
+                    isPrivate = data.is_private;
+                    if (retry === 0) {
+                        return res.status(400).json({
+                            status: "failed",
+                            message: "Error in fetching details or the account does not exist"
+                        })
+                    }
+                    retry--;
+                }
             }
         }
 
