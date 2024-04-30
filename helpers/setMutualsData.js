@@ -295,14 +295,14 @@ const setMutualsData = async (req, res) => {
                     pk = data.pk;
                     user_id = pk;
                     isPrivate = data.is_private;
+                    if (retry === 0) {
+                        return res.status(400).json({
+                            status: "failed",
+                            message: "Error in fetching details or the account does not exist"
+                        })
+                    }
+                    retry--;
                 }
-                if (retry === 0) {
-                    return res.status(400).json({
-                        status: "failed",
-                        message: "Error in fetching details or the account does not exist"
-                    })
-                }
-                retry--;
             }
         } else {
             try {
