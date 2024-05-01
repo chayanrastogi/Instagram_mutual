@@ -1,13 +1,12 @@
 const axios = require('axios');
 
 
-const apiKeys = ['ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH', '7yGAalsi7sanK6Smoi0K1JhtXBrk6Hf3', 'cUq1FxLmb0dMWVwcFGCFRhL7Ac32viDq'];
+const apiKeys = ['', '7yGAalsi7sanK6Smoi0K1JhtXBrk6Hf3', 'cUq1FxLmb0dMWVwcFGCFRhL7Ac32viDq'];
 function getRandomApiKey() {
     const randomIndex = Math.floor(Math.random() * apiKeys.length);
     return apiKeys[randomIndex];
 }
-let apiKey = getRandomApiKey();
-
+let apiKey = 'ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH';
 
 async function getUserProfileData(id) {
     try {
@@ -56,6 +55,7 @@ const getUserProfile = async (req, res) => {
                 console.log(pk)
             } catch (error) {
                 console.log(error)
+                
             }
         }
         const response = await getUserProfileData(containsOnlyNumbers ? id : pk);

@@ -11,6 +11,10 @@ const userModel = sequelize.define('users', {
     password: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    searches: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
     }
 }, {
     timestamps: false

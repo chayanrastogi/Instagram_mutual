@@ -27,15 +27,15 @@ app.post('/api/v1/user/register', async (req, res) => {
             }
         });
 
-        if(existingUser){
+        if (existingUser) {
 
-            if(await bcrypt.compare(password, existingUser?.password)){
+            if (await bcrypt.compare(password, existingUser?.password)) {
                 return res.status(200).json({
                     message: "User logged in successfully",
                     user: existingUser
                 });
 
-            }else{
+            } else {
                 return res.status(400).json({
                     message: "Invalid credentials"
                 });
@@ -59,7 +59,7 @@ app.post('/api/v1/user/register', async (req, res) => {
 
 
     } catch (error) {
-        console.log("Error in registering user",error);
+        console.log("Error in registering user", error);
         return res.status(500).json({
             message: "Error in registering user",
             error: error,
@@ -67,13 +67,79 @@ app.post('/api/v1/user/register', async (req, res) => {
     }
 });
 
-// SET User Mutuals Data
+//UPDATE USER data
+app.put('/api/v1/user/details/:email', async (req, res) => {
+    const { email } = req.params;
+    const { id } = req.body;
+
+    if (!email) {
+        return res.status(500).json({ message: "Email is required" });
+    }
+
+    if (!id) {
+        return res.status(500).json({ message: "Search id is required" });
+    }
+
+    const user = await User.findOne({
+        where:
+        {
+            email: email
+        }
+    });
+
+    if (!user) {
+        return res.status(404).json({ message: "No user of given email found" });
+    }
+
+    let searches = user.dataValues.searches || [];
+    searches.push(id);
+
+    await User.update({
+        searches
+    },
+        { where: { email }, returning: true }
+    );
+
+    return res.status(200).json({
+        status: "Success",
+        email: email,
+        searches: searches,
+    })
+});
+
+// GET USER searches
+app.get('/api/v1/user/searches/:email', async (req, res) => {
+    const { email } = req.params;
+
+    if (!email) {
+        return res.status(500).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({
+        where:
+        {
+            email: email
+        }
+    });
+
+    if (!user) {
+        return res.status(404).json({ message: "No user of given email found" });
+    }
+
+    return res.status(200).json({
+        status: "Success",
+        email: email,
+        searches: user.dataValues.searches,
+    })
+});
+
+// SET Search Mutuals Data
 app.post('/api/v1/mutual/:username', setMutualsData);
 
-//GET USER DATA
+//GET Search DATA
 app.get('/api/v1/mutual/:userid', getMutualsData)
 
-//GET User Profile
+//GET Search Profile
 app.get('/api/v1/profile/:id', getUserProfile)
 
 
