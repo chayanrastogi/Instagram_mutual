@@ -21,7 +21,7 @@ const getMutualsData = async (req, res) => {
             })
         }
 
-        const status = await db.query("SELECT processed FROM instagram_user_data WHERE id = :userid",
+        const status = await db.query("SELECT processed FROM instagram_users_data WHERE id = :userid",
             {
                 replacements: { userid }
             });
@@ -32,13 +32,13 @@ const getMutualsData = async (req, res) => {
                 message: 'Data is not processed yet.'
             });
         } else {
-            const status = await db.query("SELECT mutuals FROM instagram_user_data WHERE id = :userid",
+            const status = await db.query("SELECT mutuals FROM instagram_users_data WHERE id = :userid",
                 {
                     replacements: { userid }
                 });
             return res.status(200).send({
                 status: "Success",
-                data: status[0][0].mutuals.map(str => JSON.parse(str.replace(/\\/g, ''))),
+                data: status[0][0].mutuals,
             })
         }
 

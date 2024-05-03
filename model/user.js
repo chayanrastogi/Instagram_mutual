@@ -13,7 +13,7 @@ const userModel = sequelize.define('users', {
         allowNull: false
     },
     searches: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
+        type: DataTypes.JSON,
         allowNull: true,
     }
 }, {

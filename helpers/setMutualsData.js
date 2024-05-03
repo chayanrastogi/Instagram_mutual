@@ -272,7 +272,7 @@ const setMutualsData = async (req, res) => {
         }
 
         if (!isPrivate) {
-            await db.query("INSERT INTO instagram_user_data (id, processed, created_at) VALUES (:user_id, false, NOW())", {
+            await db.query("INSERT INTO instagram_users_data (id, processed) VALUES (:user_id, false)", {
                 replacements: { user_id }
             });
             // Send an immediate response to the user

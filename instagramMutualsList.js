@@ -5,11 +5,16 @@ const getMutualsData = require("./helpers/getMutualsData");
 const getUserProfile = require("./helpers/getUserProfile");
 const User = require("./model/user");
 const bcrypt = require('bcrypt');
+const axios = require('axios');
+const moment = require('moment');
+const InstagramData = require('./model/instagramUserData');
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+InstagramData.sync();
+
 
 //REGISTER/LOGIN User
 app.post('/api/v1/user/register', async (req, res) => {
@@ -91,8 +96,29 @@ app.put('/api/v1/user/details/:email', async (req, res) => {
         return res.status(404).json({ message: "No user of given email found" });
     }
 
+let result;
+    try {
+        let url = `https://api.hikerapi.com/v1/user/by/id?id=${id}`
+                let headers = {
+                    'Accept': 'application/json',
+                    'x-access-key': 'ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH'
+                };
+
+                const response = await axios.get(url, { headers });
+                data = response.data;
+                result = {
+                    pk: data.pk,
+                    full_name: data.full_name,
+                    username: data.username,
+                    time: moment().format('YYYY-MM-DD HH:mm:ss'),
+                }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({message:"Error in fetching details"});
+    }
+
     let searches = user.dataValues.searches || [];
-    searches.push(id);
+    searches.push(result);
 
     await User.update({
         searches
@@ -101,7 +127,7 @@ app.put('/api/v1/user/details/:email', async (req, res) => {
     );
 
     return res.status(200).json({
-        status: "Success",
+        status: "Successfully added to search history",
         email: email,
         searches: searches,
     })
@@ -126,10 +152,12 @@ app.get('/api/v1/user/searches/:email', async (req, res) => {
         return res.status(404).json({ message: "No user of given email found" });
     }
 
+    let search = await user.dataValues.searches;
+
     return res.status(200).json({
-        status: "Success",
+        status: "Successfully retrieved search history",
         email: email,
-        searches: user.dataValues.searches,
+        searches: search,
     })
 });
 

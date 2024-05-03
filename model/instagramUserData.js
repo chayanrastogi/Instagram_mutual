@@ -2,7 +2,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
 
-const InstagramData = sequelize.define('instagram_user_data', {
+const InstagramData = sequelize.define('instagram_users_data', {
     id: {
         field: 'id',
         type: DataTypes.INTEGER,
@@ -11,7 +11,7 @@ const InstagramData = sequelize.define('instagram_user_data', {
     },
     mutuals: {
         field: 'mutuals', 
-        type: DataTypes.ARRAY(DataTypes.JSONB), 
+        type: DataTypes.JSON, 
         allowNull: true
     },
     processed:{
