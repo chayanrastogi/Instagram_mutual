@@ -1,7 +1,10 @@
 const db = require('../db')
 const InstagramData = require('../model/instagramUserData')
 
+let percentage = 10;
+
 const getMutualsData = async (req, res) => {
+    
     try {
         const { userid } = req.params;
         if (!userid) {
@@ -26,18 +29,30 @@ const getMutualsData = async (req, res) => {
                 replacements: { userid }
             });
 
+        let interval = setInterval(() => {
+            if (percentage >= 100) {
+                clearInterval(interval);
+            } else {
+                percentage += 20;
+            }
+
+        }, 20000);
+
         if (status.length === 0 || status[0].length === 0 || status[0][0].processed !== true) {
             return res.status(200).send({
                 status: "in-progress",
+                percentage: percentage > 100 ? "80%" : percentage + "%",
                 message: 'Data is not processed yet.'
             });
         } else {
+            percentage = 10;
             const status = await db.query("SELECT mutuals FROM instagram_users_data WHERE id = :userid",
                 {
                     replacements: { userid }
                 });
             return res.status(200).send({
                 status: "Success",
+                percentage: "100%",
                 data: status[0][0].mutuals,
             })
         }
@@ -48,4 +63,4 @@ const getMutualsData = async (req, res) => {
     }
 };
 
-module.exports  = getMutualsData;
+module.exports = getMutualsData;

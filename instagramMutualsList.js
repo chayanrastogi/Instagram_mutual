@@ -96,29 +96,33 @@ app.put('/api/v1/user/details/:email', async (req, res) => {
         return res.status(404).json({ message: "No user of given email found" });
     }
 
-let result;
+    let result;
     try {
         let url = `https://api.hikerapi.com/v1/user/by/id?id=${id}`
-                let headers = {
-                    'Accept': 'application/json',
-                    'x-access-key': 'ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH'
-                };
+        let headers = {
+            'Accept': 'application/json',
+            'x-access-key': 'ssLCEY9ff55P1pjqQoKQrLbSlHgb6mRH'
+        };
 
-                const response = await axios.get(url, { headers });
-                data = response.data;
-                result = {
-                    pk: data.pk,
-                    full_name: data.full_name,
-                    username: data.username,
-                    time: moment().format('YYYY-MM-DD HH:mm:ss'),
-                }
+        const response = await axios.get(url, { headers });
+        data = response.data;
+        result = {
+            pk: data.pk,
+            full_name: data.full_name,
+            username: data.username,
+            time: moment().format('YYYY-MM-DD HH:mm:ss'),
+        }
     } catch (error) {
         console.log(error);
-        return res.status(500).json({message:"Error in fetching details"});
+        return res.status(500).json({ message: "Error in fetching details" });
     }
 
     let searches = user.dataValues.searches || [];
-    searches.push(result);
+    let existSearch = searches.some(search => search.pk === result.pk);
+    if (!existSearch) {
+        searches.push(result);
+    }
+
 
     await User.update({
         searches
